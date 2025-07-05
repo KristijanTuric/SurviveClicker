@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using TMPro;
@@ -61,6 +62,13 @@ public class GameManager : MonoBehaviour
     private float timer;
     private bool isGameRunning = false;
     private Coroutine notificationCoroutine;
+
+    public Texture2D cursorTexture;
+
+    private void Start()
+    {
+        Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
+    }
 
     private void Update()
     {
