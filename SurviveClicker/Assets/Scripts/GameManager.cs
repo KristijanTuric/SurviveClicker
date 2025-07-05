@@ -3,6 +3,7 @@ using System.Collections;
 using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -56,13 +57,19 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text woodcutterText;
     [SerializeField] private TMP_Text quarryText;
     [SerializeField] private TMP_Text ironMineText;
+    [SerializeField] private TMP_Text goldMineText;
+    [SerializeField] private TMP_Text blacksmithText;
     
     [SerializeField] private TMP_Text notificationText;
+    [SerializeField] private TMP_Text speedText;
+
+    [SerializeField] private Image timeImage;
 
     private float timer;
     private bool isGameRunning = false;
     private Coroutine notificationCoroutine;
 
+    [Header("Custom UI")]
     public Texture2D cursorTexture;
 
     private void Start()
@@ -75,18 +82,22 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             Time.timeScale = 1;
+            speedText.text = $"Speed 1x";
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             Time.timeScale = 2;
+            speedText.text = $"Speed 2x";
         }
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {
             Time.timeScale = 3;
+            speedText.text = $"Speed 3x";
         }
         if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             Time.timeScale = 10;
+            speedText.text = $"Speed 10x";
         }
 
 
@@ -101,6 +112,7 @@ public class GameManager : MonoBehaviour
         if (!isGameRunning) return;
         
         timer += Time.deltaTime;
+        timeImage.fillAmount = 1 - (timer / 60);
         if (timer >= 60)
         {
             days++;
@@ -206,6 +218,21 @@ public class GameManager : MonoBehaviour
         stone += quarry * 3;
     }
 
+    private void IronProduction()
+    {
+        iron += ironMines * 4;
+    }
+
+    private void GoldProduction()
+    {
+        gold += goldMines * 10;
+    }
+
+    private void ToolsProduction()
+    {
+        tools += blacksmith * 3;
+    }
+
     #endregion
 
     #region Build Buildings
@@ -298,6 +325,59 @@ public class GameManager : MonoBehaviour
         else
         {
             notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {15 - wood} wood and {4 - unemployed} workers!"));
+        }
+    }
+
+    public void BuildIronMine()
+    {
+        if (wood >= 22 && stone >= 20 && CanAssign(5))
+        {
+            wood -= 22;
+            stone -= 20;
+            ironMines++;
+            AssignWorkers(5);
+            UpdateText();
+            notificationCoroutine = StartCoroutine(NotificationText($"You have built an Iron Mine!"));
+        }
+        else
+        {
+            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {22 - wood} wood, {20 - stone} stone and {5 - unemployed} workers!"));
+        }
+    }
+    
+    public void BuildGoldMine()
+    {
+        if (wood >= 22 && stone >= 20 && tools >= 20 && CanAssign(10))
+        {
+            wood -= 22;
+            stone -= 20;
+            tools -= 20;
+            goldMines++;
+            AssignWorkers(10);
+            UpdateText();
+            notificationCoroutine = StartCoroutine(NotificationText($"You have built a Gold Mine!"));
+        }
+        else
+        {
+            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {22 - wood} wood, {20 - stone} stone, {20 - tools} tools and {10 - unemployed} workers!"));
+        }
+    }
+    
+    public void BuildBlacksmith()
+    {
+        if (wood >= 30 && stone >= 30 && iron >= 15 && CanAssign(5))
+        {
+            wood -= 30;
+            stone -= 30;
+            iron -= 15;
+            blacksmith++;
+            AssignWorkers(5);
+            UpdateText();
+            notificationCoroutine = StartCoroutine(NotificationText($"You have built a Blacksmith!"));
+        }
+        else
+        {
+            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {30 - wood} wood, {30 - stone} stone, {15 - iron} iron and {5 - unemployed} workers!"));
         }
     }
 
