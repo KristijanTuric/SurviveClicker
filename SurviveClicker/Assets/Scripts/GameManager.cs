@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using TMPro;
+using Unity.VisualScripting.Antlr3.Runtime.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -60,16 +61,29 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text goldMineText;
     [SerializeField] private TMP_Text blacksmithText;
     
+    [Header("Buildings Production")]
+    [Space(5)]
+    [SerializeField] private TMP_Text houseProductionText;
+    [SerializeField] private TMP_Text farmProductionText;
+    [SerializeField] private TMP_Text woodcutterProductionText;
+    [SerializeField] private TMP_Text quarryProductionText;
+    [SerializeField] private TMP_Text ironMineProductionText;
+    [SerializeField] private TMP_Text goldMineProductionText;
+    [SerializeField] private TMP_Text blacksmithProductionText;
+    
+    [Header("Misc UI")]
     [SerializeField] private TMP_Text notificationText;
     [SerializeField] private TMP_Text speedText;
-
     [SerializeField] private Image timeImage;
+    [SerializeField] private GameMenuUI gameMenuUI;
+
+    [SerializeField] private SoundEffects soundEffects;
 
     private float timer;
     private bool isGameRunning = false;
     private Coroutine notificationCoroutine;
 
-    [Header("Custom UI")]
+    [Header("Custom Cursor")]
     public Texture2D cursorTexture;
 
     private void Start()
@@ -99,8 +113,12 @@ public class GameManager : MonoBehaviour
             Time.timeScale = 10;
             speedText.text = $"Speed 10x";
         }
-
-
+        if (Input.GetKeyDown(KeyCode.Alpha5))
+        {
+            Time.timeScale = 20;
+            speedText.text = $"Speed 20x";
+        }
+        
         TimeOfDay();
     }
 
@@ -119,6 +137,9 @@ public class GameManager : MonoBehaviour
 
             WoodProduction();
             StoneProduction();
+            IronProduction();
+            GoldProduction();
+            ToolsProduction();
 
             FoodProduction();
             FoodConsumption();
@@ -127,23 +148,104 @@ public class GameManager : MonoBehaviour
 
             UpdateText();
 
+            if (HasWon())
+            {
+                gameMenuUI.ShowGameWinPanel();
+                isGameRunning = false;
+            }
+            else if (HasLost())
+            {
+                gameMenuUI.ShowGameOverPanel();
+                soundEffects.PlayGameOver();
+                isGameRunning = false;
+            }
+            
             timer = 0;
         }
     }
 
+    private bool HasLost()
+    {
+        if (Population() <= 0) return true;
+        return false;
+    }
+
+    private bool HasWon()
+    {
+        if (gold >= 200) return true;
+        return false;
+    }
+
     public void InitializeGame()
     {
+        soundEffects.RestartMusic();
+        Time.timeScale = 1;
+        speedText.text = $"Speed 1x";
         isGameRunning = true;
         UpdateText();
+    }
+
+    public void PlayAgain()
+    {
+        gameMenuUI.ShowPlayAgain();
+        ResetResources();
+        InitializeGame();
+    }
+
+    public void MainMenu()
+    {
+        gameMenuUI.ShowMainMenu();
+        ResetResources();
+        InitializeGame();
+    }
+
+    private void ResetResources()
+    {
+        days = 0;
+        
+        workers = 0;
+        unemployed = 20;
+        
+        wood = 15;
+        stone = 0;
+        iron = 5;
+        gold = 0;
+        tools = 0;
+        
+        food = 50;
+
+        house = 0;
+        farm = 0;
+        woodcutter = 0;
+        quarry = 0;
+        ironMines = 0;
+        goldMines = 0;
+        blacksmith = 0;
+
+        timer = 0;
     }
 
     #region Food
 
     /// <summary>
-    /// Consumes one food per pop per day
+    /// Consumes food
     /// </summary>
     private void FoodConsumption()
     {
+        if (food <= 0)
+        {
+            if (unemployed > 0)
+            {
+                unemployed += food;
+                unemployed = Mathf.Clamp(unemployed, 0, Population());
+            }
+            else if (workers > 0)
+            {
+                workers += food;
+                workers = Mathf.Clamp(workers, 0, Population());
+            }
+        }
+        
         food -= Population();
     }
 
@@ -161,7 +263,7 @@ public class GameManager : MonoBehaviour
     private void FoodProduction()
     {
         FoodGathering();
-        food += farm * 4; // Food from farms
+        food += farm * 8; // Food from farms
     }
 
     #endregion
@@ -188,7 +290,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void IncreasePopulation()
     {
-        if (days % 2 == 0)
+        if (days % 2 == 0 && food >= 0)
         {
             if (GetMaxPopulation() > Population())
             {
@@ -220,7 +322,7 @@ public class GameManager : MonoBehaviour
 
     private void IronProduction()
     {
-        iron += ironMines * 4;
+        iron += ironMines * 2;
     }
 
     private void GoldProduction()
@@ -341,7 +443,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {22 - wood} wood, {20 - stone} stone and {5 - unemployed} workers!"));
+            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build an Iron Mine, you need {22 - wood} wood, {20 - stone} stone and {5 - unemployed} workers!"));
         }
     }
     
@@ -359,7 +461,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {22 - wood} wood, {20 - stone} stone, {20 - tools} tools and {10 - unemployed} workers!"));
+            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Gold Mine, you need {22 - wood} wood, {20 - stone} stone, {20 - tools} tools and {10 - unemployed} workers!"));
         }
     }
     
@@ -377,7 +479,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Quarry, you need {30 - wood} wood, {30 - stone} stone, {15 - iron} iron and {5 - unemployed} workers!"));
+            notificationCoroutine = StartCoroutine(NotificationText($"Not enough resources to build a Blacksmith, you need {30 - wood} wood, {30 - stone} stone, {15 - iron} iron and {5 - unemployed} workers!"));
         }
     }
 
@@ -403,8 +505,23 @@ public class GameManager : MonoBehaviour
         woodcutterText.text = $"Woodcutters: {woodcutter}";
         quarryText.text = $"Quarries: {quarry}";
         ironMineText.text = $"Iron Mines: {ironMines}";
+        goldMineText.text = $"Gold Mines: {goldMines}";
+        blacksmithText.text = $"Blacksmiths: {blacksmith}";
+        
+        UpdateProductionText();
     }
 
+    private void UpdateProductionText()
+    {
+        houseProductionText.text = $"Capacity: {house * 4}";
+        farmProductionText.text = $"Farm production: {farm * 8}";
+        woodcutterProductionText.text = $"Wood production: {woodcutter * 2}";
+        quarryProductionText.text = $"Stone production: {quarry * 3}";
+        ironMineProductionText.text = $"Iron production: {ironMines * 2}";
+        goldMineProductionText.text = $"Gold production: {goldMines * 10}";
+        blacksmithProductionText.text = $"Tool production: {blacksmith * 3}";
+    }
+    
     private IEnumerator NotificationText(string text) 
     {
         if (notificationCoroutine != null) StopCoroutine(notificationCoroutine);
