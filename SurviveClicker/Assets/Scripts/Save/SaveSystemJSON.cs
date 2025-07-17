@@ -20,6 +20,13 @@ public class SaveSystemJSON
     public List<PlayerInfo> LoadFromJson()
     {
         string infoJson = File.ReadAllText(Path.Combine(savePath, "PlayerData.json"));
+
+        // When the save file is empty
+        if (string.IsNullOrWhiteSpace(infoJson))
+        {
+            return new List<PlayerInfo>();
+        }
+        
         PlayerInfoList playerInfoList = JsonUtility.FromJson<PlayerInfoList>(infoJson);
 
         return playerInfoList.list;
