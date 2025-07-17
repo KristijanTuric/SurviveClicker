@@ -1,8 +1,6 @@
-using System;
 using System.Collections;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting.Antlr3.Runtime.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -77,11 +75,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Image timeImage;
     [SerializeField] private GameMenuUI gameMenuUI;
 
+    [SerializeField] private TMP_InputField playerNameInput;
+    [SerializeField] private Button playerInputButton;
+
     [SerializeField] private SoundEffects soundEffects;
 
     private float timer;
     private bool isGameRunning = false;
     private Coroutine notificationCoroutine;
+    
+    private SaveSystemJSON saveSystem = new SaveSystemJSON();
+    private List<PlayerInfo> playerInfos = new List<PlayerInfo>();
 
     [Header("Custom Cursor")]
     public Texture2D cursorTexture;
@@ -89,6 +93,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
+        playerInfos = saveSystem.LoadFromJson();
     }
 
     private void Update()
@@ -164,6 +169,20 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void SavePlayerInfo()
+    {
+        PlayerInfo currentPlayerInfo = new PlayerInfo();
+        currentPlayerInfo.daysPlayed = days;
+        currentPlayerInfo.playerName = playerNameInput.text.ToUpper();
+        
+        playerInfos.Add(currentPlayerInfo);
+        saveSystem.SaveToJson(playerInfos);
+
+        // Disable the input and button
+        playerNameInput.interactable = false;
+        playerInputButton.interactable = false;
+    }
+    
     private bool HasLost()
     {
         if (Population() <= 0) return true;
@@ -183,6 +202,11 @@ public class GameManager : MonoBehaviour
         speedText.text = $"Speed 1x";
         isGameRunning = true;
         UpdateText();
+        
+        // Enable the input and button
+        playerNameInput.interactable = true;
+        playerInputButton.interactable = true;
+        playerNameInput.text = string.Empty;
     }
 
     public void PlayAgain()
