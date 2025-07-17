@@ -77,6 +77,7 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private TMP_InputField playerNameInput;
     [SerializeField] private Button playerInputButton;
+    [SerializeField] private TMP_Text leaderboardTMPText;
 
     [SerializeField] private SoundEffects soundEffects;
 
@@ -90,10 +91,16 @@ public class GameManager : MonoBehaviour
     [Header("Custom Cursor")]
     public Texture2D cursorTexture;
 
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+    }
+
     private void Start()
     {
         Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
         playerInfos = saveSystem.LoadFromJson();
+        SortLeaderboard();
     }
 
     private void Update()
@@ -181,6 +188,22 @@ public class GameManager : MonoBehaviour
         // Disable the input and button
         playerNameInput.interactable = false;
         playerInputButton.interactable = false;
+
+        SortLeaderboard();
+    }
+
+    private void SortLeaderboard()
+    {
+        playerInfos.Sort((a, b) => b.daysPlayed.CompareTo(a.daysPlayed));
+
+        string leaderboardText = $"Leaderboard:\n";
+        
+        for (int i = 0; i < (playerInfos.Count <= 5 ? playerInfos.Count : 5); i++)
+        {
+            leaderboardText += $"{i + 1}. {playerInfos[i].playerName} - {playerInfos[i].daysPlayed}\n";
+        }
+
+        leaderboardTMPText.text = leaderboardText;
     }
     
     private bool HasLost()
