@@ -75,8 +75,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Image timeImage;
     [SerializeField] private GameMenuUI gameMenuUI;
 
+    [SerializeField] private GameObject playerInput;
     [SerializeField] private TMP_InputField playerNameInput;
     [SerializeField] private Button playerInputButton;
+    
     [SerializeField] private TMP_Text leaderboardTMPText;
 
     [SerializeField] private SoundEffects soundEffects;
@@ -162,11 +164,13 @@ public class GameManager : MonoBehaviour
 
             if (HasWon())
             {
+                playerInput.SetActive(true);
                 gameMenuUI.ShowGameWinPanel();
                 isGameRunning = false;
             }
             else if (HasLost())
             {
+                playerInput.SetActive(true);
                 gameMenuUI.ShowGameOverPanel();
                 soundEffects.PlayGameOver();
                 isGameRunning = false;
@@ -185,10 +189,8 @@ public class GameManager : MonoBehaviour
         playerInfos.Add(currentPlayerInfo);
         saveSystem.SaveToJson(playerInfos);
 
-        // Disable the input and button
-        playerNameInput.interactable = false;
-        playerInputButton.interactable = false;
-
+        playerInput.SetActive(false);
+        
         SortLeaderboard();
     }
 
